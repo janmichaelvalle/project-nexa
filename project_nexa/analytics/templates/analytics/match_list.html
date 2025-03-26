@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Match Data</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+  <div class="container mt-4">
+    {% block body %}
+    <h1 class="text-center my-4">Match Up Stats</h1>
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">Character</th>
+          <th scope="col">Win</th>
+          <th scope="col">Loss</th>
+          <th scope="col">Win Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for character in matchup_stats %}
+        <tr>
+          <td>{{ character.name }}</td>
+          <td>{{ match.character }}</td>
+          <td>{{ match.rounds_won }}-{{ match.rounds_lost }}</td>
+          <td>{{ match.opponent_character }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <h1 class="text-center my-4">Match Data</h1>
+    <table class="table table-bordered table-hover">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">Date</th>
+          <th scope="col">Character</th>
+          <th scope="col">Rounds</th>
+          <th scope="col">Opponent's Character</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for match in all_match_data %}
+        <tr class="{% if match.winner %}table-success{% else %}table-danger{% endif %}">
+          <td>{{ match.battle_at }}</td>
+          <td>{{ match.character }}</td>
+          <td>{{ match.rounds_won }}-{{ match.rounds_lost }}</td>
+          <td>{{ match.opponent_character }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endblock %}
+  </div>
+</body>
+</html>
