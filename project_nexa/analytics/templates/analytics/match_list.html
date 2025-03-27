@@ -9,29 +9,52 @@
 <body>
   <div class="container mt-4">
     {% block body %}
-    <h1 class="text-center my-4">Match Up Stats</h1>
-    <table class="table table-bordered table-hover">
+    <h1 class="text-center my-4">Match Up Trends</h1>
+    <table class="table table-bordered table-hover text-center">
       <thead class="table-dark">
         <tr>
           <th scope="col">Character</th>
-          <th scope="col">Win</th>
-          <th scope="col">Loss</th>
-          <th scope="col">Win Rate</th>
+          <th scope="col">Previous 10 Win Rate</th>
+          <th scope="col">Recent 10 Win Rate</th>
+          <th scope="col">Change</th>
         </tr>
       </thead>
       <tbody>
-        {% for character in matchup_stats %}
-        <tr>
-          <td>{{ character.name }}</td>
-          <td>{{ match.character }}</td>
-          <td>{{ match.rounds_won }}-{{ match.rounds_lost }}</td>
-          <td>{{ match.opponent_character }}</td>
+        {% for trend in matchup_trends %}
+        <tr class="{% if trend.improvement > 0 %}table-success{% elif trend.improvement < 0 %}table-danger{% else %}table-warning{% endif %}">
+          <td>{{ trend.opponent_character }}</td>
+          <td>{{ trend.previous_win_rate|floatformat:2 }}%</td>
+          <td>{{ trend.recent_win_rate|floatformat:2 }}%</td>
+          <td>{{ trend.improvement|floatformat:2 }}%</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
+    
+    <h1 class="text-center my-4">Match Up Stats (Last 100 Matches)</h1>
+    <table class="table table-bordered table-hover text-center">
+      <thead class="table-dark">
+        <tr>
+          <th scope="col">Character</th>
+          <th scope="col">Total Matches</th>
+          <th scope="col">Wins</th>
+          <th scope="col">Win Rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for matchup in matchup_weaknesses %}
+        <tr>
+          <td>{{ matchup.opponent_character }}</td>
+          <td>{{ matchup.total_matches }}</td>
+          <td>{{ matchup.wins }}</td>
+          <td>{{ matchup.win_rate|floatformat:2 }}%</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    
     <h1 class="text-center my-4">Match Data</h1>
-    <table class="table table-bordered table-hover">
+    <table class="table table-bordered table-hover text-center">
       <thead class="table-dark">
         <tr>
           <th scope="col">Date</th>
