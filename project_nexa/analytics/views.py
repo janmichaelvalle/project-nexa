@@ -6,10 +6,13 @@ from django.db.models.functions import Cast
 def index(request):
     # Get all matches sorted by battle_at
     all_match_data = list(Match.objects.order_by('-battle_at'))
-    last_100_matches = Match.objects.filter(
+    all_100_matches_qs = Match.objects.filter(
         Q(rounds_won=2) | Q(rounds_lost=2)
-    ).order_by('-battle_at')[:100]
-    print(f"Total last 100 matches: {last_100_matches.count()}")
+    ).order_by('-battle_at')
+    last_100_matches = list(all_100_matches_qs[:100])
+    date_100_first = last_100_matches[-1].battle_at.date() if last_100_matches else None
+    date_100_last = last_100_matches[0].battle_at.date() if last_100_matches else None
+    print(f"Total last 100 matches: {len(last_100_matches)}")
     print("Last 100 Matches:", last_100_matches)
 
     # Debug prints to check the correctness of last_100_matches
@@ -71,6 +74,8 @@ def index(request):
     last_50_matches = Match.objects.filter(
         Q(rounds_won=2) | Q(rounds_lost=2)
     ).order_by('-battle_at')[:50]
+    date_50_first = last_50_matches[len(last_50_matches) - 1].battle_at.date() if last_50_matches else None
+    date_50_last = last_50_matches[0].battle_at.date() if last_50_matches else None
     
     loss_contributions_50 = {}
     max_total_sets_50 = 0
@@ -109,6 +114,8 @@ def index(request):
     last_25_matches = Match.objects.filter(
         Q(rounds_won=2) | Q(rounds_lost=2)
     ).order_by('-battle_at')[:25]
+    date_25_first = last_25_matches[len(last_25_matches) - 1].battle_at.date() if last_25_matches else None
+    date_25_last = last_25_matches[0].battle_at.date() if last_25_matches else None
     
     loss_contributions_25 = {}
     max_total_sets_25 = 0
@@ -178,21 +185,25 @@ def index(request):
     matchup_performance = []
     for char, matches in character_match_history.items():
         completed_sets = [m for m in matches if m.rounds_won == 2 or m.rounds_lost == 2]
-        if len(completed_sets) < 10:
-            continue  # Skip if there are not enough completed sets
+        if len(completed_sets) < 20:
+            continue  # Skip if there are less than 20 completed sets
 
-        last_20 = completed_sets[:20]  # Get last 20 completed sets for this character
-        recent_10 = last_20[:10]  # Most recent 10 sets
-        previous_10 = last_20[10:20]  # Previous 10 sets
+        last_20 = completed_sets[:20]
+        recent_10 = last_20[:10]
+        previous_10 = last_20[10:] if len(last_20) > 10 else []
 
         recent_loss_rates = compute_loss_rate(Match.objects.filter(battle_at__in=[m.battle_at for m in recent_10]))
-        previous_loss_rates = compute_loss_rate(Match.objects.filter(battle_at__in=[m.battle_at for m in previous_10]))
+        
+        if previous_10:
+            previous_loss_rates = compute_loss_rate(Match.objects.filter(battle_at__in=[m.battle_at for m in previous_10]))
+            previous = previous_loss_rates.get(char, {'loss_rate': 0, 'win_rate': 0})
+        else:
+            previous = {'loss_rate': 0, 'win_rate': 0}
 
         recent = recent_loss_rates.get(char, {'loss_rate': 0, 'win_rate': 0})
-        previous = previous_loss_rates.get(char, {'loss_rate': 0, 'win_rate': 0})
         overall = overall_loss_rates.get(char, {'loss_rate': 0, 'win_rate': 0})
 
-        improvement = recent['loss_rate'] - previous['loss_rate']
+        improvement = recent['win_rate'] - previous['win_rate']
 
         matchup_performance.append({
             'opponent_character': char,
@@ -228,5 +239,10 @@ def index(request):
         'loss_contributions_50': loss_contributions_list_50,
         'loss_contributions_25': loss_contributions_list_25,
         'loss_contribution_trends': loss_contribution_trends,
-        'key_matchups': key_matchups
+        'key_matchups': key_matchups,
+        'loss_contribution_range': {
+            100: {'first_date': date_100_first, 'last_date': date_100_last},
+            50: {'first_date': date_50_first, 'last_date': date_50_last},
+            25: {'first_date': date_25_first, 'last_date': date_25_last},
+        }
     })

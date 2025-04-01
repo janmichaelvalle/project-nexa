@@ -20,9 +20,14 @@ class Command(BaseCommand):
             return
 
         soup = BeautifulSoup(response.text, "html.parser")
-        match_table = soup.find("table")  # Find the table with matches
+        game_list_div = soup.find("div", class_="game-list")
+        if not game_list_div:
+            self.stdout.write(self.style.ERROR("Game list not found!"))
+            return
+
+        match_table = game_list_div.find("table")
         if not match_table:
-            self.stdout.write(self.style.ERROR("Match table not found!"))
+            self.stdout.write(self.style.ERROR("Match table not found inside game list!"))
             return
 
         match_rows = match_table.find_all("tr")  # Find all match rows

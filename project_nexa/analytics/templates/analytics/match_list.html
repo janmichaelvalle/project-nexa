@@ -15,7 +15,6 @@
         <tr>
           <th scope="col">Character</th>
           <th scope="col">Total Sets</th>
-          <th scope="col">Wins</th>
           <th scope="col">Overall Win Rate</th>
           <th scope="col">Previous 10 Win Rate</th>
           <th scope="col">Recent 10 Win Rate</th>
@@ -27,7 +26,7 @@
         <tr class="{% if matchup.improvement > 0 %}table-success{% elif matchup.improvement < 0 %}table-danger{% else %}table-warning{% endif %}">
           <td>{{ matchup.opponent_character }}</td>
           <td>{{ matchup.total_sets }}</td>
-          <td>{{ matchup.wins }}</td>
+
           <td>{{ matchup.overall_win_rate|floatformat:2 }}%</td>
           <td>{{ matchup.previous_win_rate|floatformat:2 }}%</td>
           <td>{{ matchup.recent_win_rate|floatformat:2 }}%</td>
@@ -60,6 +59,7 @@
     </table>
 
     <h1 class="text-center my-4">Loss Contribution (Last 100 Sets)</h1>
+    <p class="text-center text-muted">From {{ loss_contribution_range.100.first_date }} to {{ loss_contribution_range.100.last_date }}</p>
     <table class="table table-bordered table-hover text-center">
       <thead class="table-dark">
         <tr>
@@ -84,6 +84,7 @@
     </table>
 
     <h1 class="text-center my-4">Loss Contribution (Last 50 Sets)</h1>
+    <p class="text-center text-muted">From {{ loss_contribution_range.50.first_date }} to {{ loss_contribution_range.50.last_date }}</p>
     <table class="table table-bordered table-hover text-center">
       <thead class="table-dark">
         <tr>
@@ -108,6 +109,7 @@
     </table>
 
     <h1 class="text-center my-4">Loss Contribution (Last 25 Sets)</h1>
+    <p class="text-center text-muted">From {{ loss_contribution_range.25.first_date }} to {{ loss_contribution_range.25.last_date }}</p>
     <table class="table table-bordered table-hover text-center">
       <thead class="table-dark">
         <tr>
