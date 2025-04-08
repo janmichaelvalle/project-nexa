@@ -246,3 +246,10 @@ def index(request):
             25: {'first_date': date_25_first, 'last_date': date_25_last},
         }
     })
+
+def match_list(request):
+    return render(request, 'analytics/match_list.html')
+
+
+def test_template(request):
+    return render(request, 'test_page.html')
