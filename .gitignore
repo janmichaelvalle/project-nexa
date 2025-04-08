@@ -17,4 +17,4 @@ db_backup.sqlite3
 
 # IDE-specific files
 .vscode/
-.idea/
+.idea/wavu_data.sqlite3
