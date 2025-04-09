@@ -4,6 +4,8 @@ from django.conf import settings
 from django.shortcuts import render, redirect
 from django.contrib import messages
 from .forms import RegisterForm
+from django.contrib.auth.decorators import login_required
+from .models import Profile
 
 
 def register(request):
@@ -18,11 +20,35 @@ def register(request):
             # Check if tekken_id exists in the database
             conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT 1 FROM matches WHERE p1_polaris_id = ? OR p2_polaris_id = ? LIMIT 1",
-                (tekken_id, tekken_id)
-            )
+            cursor.execute("""
+                SELECT battle_at, p1_polaris_id, p1_name, p1_rank, p2_polaris_id, p2_name, p2_rank
+                FROM matches
+                WHERE p1_polaris_id = ? OR p2_polaris_id = ?
+                ORDER BY battle_at DESC
+                LIMIT 1
+            """, (tekken_id, tekken_id))
             result = cursor.fetchone()
+            if result:
+                battle_at, p1_pid, p1_name, p1_rank, p2_pid, p2_name, p2_rank = result
+
+                # Choose which side the user is (p1 or p2)
+                if tekken_id == p1_pid:
+                    ign = p1_name
+                    rank = p1_rank
+                else:
+                    ign = p2_name
+                    rank = p2_rank
+
+                user = form.save(commit=False)
+                user.save()
+
+                Profile.objects.create(
+                    user=user,
+                    in_game_name=ign,
+                    polaris_id=tekken_id,
+                    rank_id=rank  # or rank=Rank.objects.get(id=rank) if you're linking via FK to Rank model
+                )
+
             conn.close()
 
             if not result:
@@ -38,4 +64,7 @@ def register(request):
 
     return render(request, 'accounts/register.html', {'form': form})
 
+@login_required
+def profile(request):
+    return render(request, 'accounts/profile.html')
 
