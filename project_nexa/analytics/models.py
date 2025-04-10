@@ -45,4 +45,4 @@ class Match(models.Model):
     def __str__(self):
         profile_name = self.profile.in_game_name if self.profile else "Unknown"
         character_name = self.character.name if self.character else "Unknown"
-        return f"{profile_name} vs {self.opponent_name} ({character_name} vs {self.opponent_character}) - {'Win' if self.winner else 'Loss'}"    
+        return f"{profile_name} vs {self.opponent_name} ({character_name} vs {self.opponent_character}) - {'Win' if self.winner else 'Loss'}"

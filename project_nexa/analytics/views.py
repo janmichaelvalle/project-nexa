@@ -4,10 +4,16 @@ from django.db.models import Count, Sum, IntegerField, Q
 from django.db.models.functions import Cast
 
 def index(request):
+    if not request.user.is_authenticated or not hasattr(request.user, 'profile'):
+        return render(request, 'analytics/match_list.html', {
+            'error': 'No profile found or user not logged in.'
+        })
+    user_profile = request.user.profile
+    
     # Get all matches sorted by battle_at
-    all_match_data = list(Match.objects.order_by('-battle_at'))
+    all_match_data = list(Match.objects.filter(profile=user_profile).order_by('-battle_at'))
     all_100_matches_qs = Match.objects.filter(
-        Q(rounds_won=2) | Q(rounds_lost=2)
+        Q(profile=user_profile) & (Q(rounds_won=2) | Q(rounds_lost=2))
     ).order_by('-battle_at')
     last_100_matches = list(all_100_matches_qs[:100])
     date_100_first = last_100_matches[-1].battle_at.date() if last_100_matches else None
@@ -32,7 +38,9 @@ def index(request):
         return {s['opponent_character']: s for s in stats}
 
     # Compute overall loss rate for all completed sets
-    overall_loss_rates = compute_loss_rate(Match.objects.filter(Q(rounds_won=2) | Q(rounds_lost=2)))
+    overall_loss_rates = compute_loss_rate(
+        Match.objects.filter(Q(profile=user_profile) & (Q(rounds_won=2) | Q(rounds_lost=2)))
+    )
 
     # Compute loss contribution for last 100 sets, summing multiple sets properly
     loss_contributions_100 = {}
@@ -72,7 +80,7 @@ def index(request):
 
     # Compute loss contribution for last 50 sets, summing multiple sets properly
     last_50_matches = Match.objects.filter(
-        Q(rounds_won=2) | Q(rounds_lost=2)
+        Q(profile=user_profile) & (Q(rounds_won=2) | Q(rounds_lost=2))
     ).order_by('-battle_at')[:50]
     date_50_first = last_50_matches[len(last_50_matches) - 1].battle_at.date() if last_50_matches else None
     date_50_last = last_50_matches[0].battle_at.date() if last_50_matches else None
@@ -112,7 +120,7 @@ def index(request):
 
     # Compute loss contribution for last 25 sets, summing multiple sets properly
     last_25_matches = Match.objects.filter(
-        Q(rounds_won=2) | Q(rounds_lost=2)
+        Q(profile=user_profile) & (Q(rounds_won=2) | Q(rounds_lost=2))
     ).order_by('-battle_at')[:25]
     date_25_first = last_25_matches[len(last_25_matches) - 1].battle_at.date() if last_25_matches else None
     date_25_last = last_25_matches[0].battle_at.date() if last_25_matches else None
@@ -192,10 +200,10 @@ def index(request):
         recent_10 = last_20[:10]
         previous_10 = last_20[10:] if len(last_20) > 10 else []
 
-        recent_loss_rates = compute_loss_rate(Match.objects.filter(battle_at__in=[m.battle_at for m in recent_10]))
+        recent_loss_rates = compute_loss_rate(Match.objects.filter(profile=user_profile, battle_at__in=[m.battle_at for m in recent_10]))
         
         if previous_10:
-            previous_loss_rates = compute_loss_rate(Match.objects.filter(battle_at__in=[m.battle_at for m in previous_10]))
+            previous_loss_rates = compute_loss_rate(Match.objects.filter(profile=user_profile, battle_at__in=[m.battle_at for m in previous_10]))
             previous = previous_loss_rates.get(char, {'loss_rate': 0, 'win_rate': 0})
         else:
             previous = {'loss_rate': 0, 'win_rate': 0}
