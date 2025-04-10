@@ -46,7 +46,7 @@ def register(request):
                     user=user,
                     in_game_name=ign,
                     polaris_id=tekken_id,
-                    rank_id=rank  # or rank=Rank.objects.get(id=rank) if you're linking via FK to Rank model
+                    rank_id=rank,  # or rank=Rank.objects.get(id=rank) if you're linking via FK to Rank model
                 )
 
             conn.close()
@@ -66,5 +66,6 @@ def register(request):
 
 @login_required
 def profile(request):
-    return render(request, 'accounts/profile.html')
+    profile = Profile.objects.get(user=request.user)
+    return render(request, 'accounts/profile.html', {'profile':profile})
 
