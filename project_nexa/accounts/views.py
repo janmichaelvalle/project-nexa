@@ -6,6 +6,8 @@ from django.contrib import messages
 from .forms import RegisterForm
 from django.contrib.auth.decorators import login_required
 from .models import Profile
+from analytics.models import Match, Character
+from datetime import datetime
 
 
 def register(request):
@@ -42,12 +44,58 @@ def register(request):
                 user = form.save(commit=False)
                 user.save()
 
-                Profile.objects.create(
+                profile = Profile.objects.create(
                     user=user,
                     in_game_name=ign,
-                    polaris_id=tekken_id,
+                    tekken_id = tekken_id,
                     rank_id=rank,  # or rank=Rank.objects.get(id=rank) if you're linking via FK to Rank model
                 )
+
+                cursor.execute("""
+                    SELECT battle_at, p1_polaris_id, p1_name, p1_chara_id, p1_rounds, 
+                           p2_polaris_id, p2_name, p2_chara_id, p2_rounds, winner
+                    FROM matches
+                    WHERE p1_polaris_id = ? OR p2_polaris_id = ?
+                    ORDER BY battle_at DESC
+                    LIMIT 100
+                """, (tekken_id, tekken_id))
+                match_rows = cursor.fetchall()
+
+                match_objects = []
+                for row in match_rows:
+                    battle_at, p1_pid, p1_name, p1_chara_id, p1_rounds, p2_pid, p2_name, p2_chara_id, p2_rounds, winner = row
+                    battle_at = datetime.fromtimestamp(battle_at)
+                    is_p1 = tekken_id == p1_pid
+                    user_rounds = p1_rounds if is_p1 else p2_rounds
+                    opp_rounds = p2_rounds if is_p1 else p1_rounds
+                    char_id = p1_chara_id if is_p1 else p2_chara_id
+                    opponent_char_id = p2_chara_id if is_p1 else p1_chara_id
+                    opponent_name = p2_name if is_p1 else p1_name
+
+                    try:
+                        char = Character.objects.get(chara_id=char_id)
+                    except Character.DoesNotExist:
+                        continue
+
+                    try:
+                        opponent_char = Character.objects.get(chara_id=opponent_char_id)
+                        opponent_char_name = opponent_char.name
+                    except Character.DoesNotExist:
+                        opponent_char_name = "Unknown"
+
+                    match_objects.append(Match(
+                        profile=profile,
+                        battle_at=battle_at,
+                        battle_type=2,
+                        character=char,
+                        opponent_name=opponent_name,
+                        opponent_character=opponent_char_name,
+                        rounds_won=user_rounds,
+                        rounds_lost=opp_rounds,
+                        winner=(winner == 1 and not is_p1) or (winner == 2 and is_p1)
+                    ))
+
+                Match.objects.bulk_create(match_objects)
 
             conn.close()
 
@@ -68,4 +116,3 @@ def register(request):
 def profile(request):
     profile = Profile.objects.get(user=request.user)
     return render(request, 'accounts/profile.html', {'profile':profile})
-
