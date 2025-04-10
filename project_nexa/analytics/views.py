@@ -1,14 +1,51 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .models import Match
 from django.db.models import Count, Sum, IntegerField, Q
 from django.db.models.functions import Cast
+from django.contrib import messages
 
 def index(request):
     if not request.user.is_authenticated or not hasattr(request.user, 'profile'):
         return render(request, 'analytics/match_list.html', {
             'error': 'No profile found or user not logged in.'
         })
+    
     user_profile = request.user.profile
+
+    return render(request, 'analytics/match_list.html', {
+        'user_profile': user_profile
+    })
+
+
+
+
+def match_list(request):
+    return render(request, 'analytics/match_list.html')
+
+
+
+
+
+
+def matchup_summary(request):
+    if not request.user.is_authenticated:
+        messages.warning(request, "You must be logged in to access the matchup summary.")
+        return redirect('login')
+    
+    else:
+        print(request.user)
+        return render(request, 'analytics/matchups.html')
+
+
+
+
+
+
+
+
+
+    """
+    # === MATCHUP ANALYSIS - TEMP DISABLED ===
     
     # Get all matches sorted by battle_at
     all_match_data = list(Match.objects.filter(profile=user_profile).order_by('-battle_at'))
@@ -258,6 +295,4 @@ def index(request):
 def match_list(request):
     return render(request, 'analytics/match_list.html')
 
-
-def test_template(request):
-    return render(request, 'test_page.html')
+"""
