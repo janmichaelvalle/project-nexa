@@ -28,13 +28,87 @@ def match_list(request):
 
 
 def matchup_summary(request):
+    def add_set_result(score, match):
+        return {
+            'result': 'Win' if score == 2 else 'Loss',
+            'your_character': match.character,
+            'opponent_character': match.opponent_character
+            }
+
     if not request.user.is_authenticated:
         messages.warning(request, "You must be logged in to access the matchup summary.")
         return redirect('login')
     
-    else:
-        print(request.user)
-        return render(request, 'analytics/matchups.html')
+    
+    user_profile = request.user.profile
+    analysis_format = request.GET.get('analysis_format') #Gets sets/matches for dropdown in html
+    selected_user_character = request.GET.get('user_character') #Get the user's character from dropdown in the html
+    selected_opponent_character = request.GET.get('opponent_character') #Gets the opponent_character for dropdown in html
+    matches = Match.objects.filter(profile=user_profile).order_by('battle_at')
+          # Pull all matches from that user
+
+    sets = []
+    current_set_score = 0
+    number_of_matches = 0
+    current_opponent = None
+
+    for match in matches:
+        if current_opponent is None:
+            # First match
+            current_opponent = match.opponent_name
+            if match.winner is True:
+                current_set_score += 1
+            number_of_matches = 1
+            print(f"This is opening match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
+        elif match.opponent_name == current_opponent:
+            number_of_matches += 1
+            print(f"This is match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
+            # Same opponent, add to current set
+            if match.winner is True:
+                current_set_score += 1       
+        else:
+             # Opponent changed — finalize the last set **before** moving on
+            if number_of_matches >= 2:
+                sets.append(add_set_result(current_set_score, previous_match))
+                # Reset for new opponent
+                number_of_matches = 0
+                current_set_score = 0
+                current_opponent = None
+        previous_match = match  
+    if number_of_matches >= 2:
+        sets.append(add_set_result(current_set_score, previous_match))
+        
+
+                
+     
+            
+
+    print(f"The current user is {request.user}")
+    print(f"Analysis format is {analysis_format}")
+    if analysis_format == 'Set':
+        print(f"Here are the sets {sets}")
+    if analysis_format == 'Match':
+        print(f"Here are the matches {matches}")
+    
+    if selected_user_character:
+        matches = matches.filter(character=selected_user_character)
+    
+    if selected_opponent_character:
+        matches = matches.filter(opponent_character=selected_opponent_character)
+    
+    user_characters = Match.objects.filter(profile=user_profile).values_list('character', flat=True).distinct()
+    opponent_characters = Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True).distinct()
+    
+    
+    
+    return render(request, 'analytics/matchups.html', {
+        'matches': matches,
+        'analysis_format': analysis_format,
+        'selected_user_character': selected_user_character,
+        'selected_opponent_character': selected_opponent_character,
+        'user_characters': user_characters,
+        'opponent_characters': opponent_characters
+    })
 
 
 

@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block content %}
+  <div class="container mt-4">
+    <h2 class="mb-4">Matchup Summary</h2>
+    <p>This is a placeholder for future matchup statistics and insights.</p>
+  </div>
+  <form method="get" class="mb-3">
+    <div class="dropdown">
+      <button class="btn btn-secondary dropdown-toggle" type="button" id="analysisFormatDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+        {{ analysis_format|default:"Set" }}
+      </button>
+      <ul class="dropdown-menu" aria-labelledby="analysisFormatDropdown">
+        <li>
+          <button type="submit" name="analysis_format" value="Set" class="dropdown-item {% if analysis_format == 'Set' or not analysis_format %}active{% endif %}">Set</button>
+        </li>
+        <li>
+          <button type="submit" name="analysis_format" value="Match" class="dropdown-item {% if analysis_format == 'Match' %}active{% endif %}">Match</button>
+        </li>
+      </ul>
+    </div>
+  </form>
+{% endblock %}
