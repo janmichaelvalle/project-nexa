@@ -19,4 +19,22 @@
       </ul>
     </div>
   </form>
+  <table class="table table-bordered table-hover text-center">
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Result</th>
+        <th scope="col">Opponent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for set in sets %}
+      <tr class="">
+        <td>{{ set.result }}</td>
+        <td>{{ set.opponent_character }}</td>
+        
+
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

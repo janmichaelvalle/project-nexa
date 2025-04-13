@@ -30,6 +30,7 @@ def match_list(request):
 def matchup_summary(request):
     def add_set_result(score, match):
         return {
+            'wins': score,
             'result': 'Win' if score == 2 else 'Loss',
             'your_character': match.character,
             'opponent_character': match.opponent_character
@@ -48,35 +49,72 @@ def matchup_summary(request):
           # Pull all matches from that user
 
     sets = []
-    current_set_score = 0
-    number_of_matches = 0
+    buffer = []
     current_opponent = None
 
     for match in matches:
         if current_opponent is None:
-            # First match
             current_opponent = match.opponent_name
-            if match.winner is True:
-                current_set_score += 1
-            number_of_matches = 1
-            print(f"This is opening match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
-        elif match.opponent_name == current_opponent:
-            number_of_matches += 1
-            print(f"This is match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
-            # Same opponent, add to current set
-            if match.winner is True:
-                current_set_score += 1       
-        else:
-             # Opponent changed — finalize the last set **before** moving on
-            if number_of_matches >= 2:
-                sets.append(add_set_result(current_set_score, previous_match))
-                # Reset for new opponent
-                number_of_matches = 0
-                current_set_score = 0
-                current_opponent = None
-        previous_match = match  
-    if number_of_matches >= 2:
-        sets.append(add_set_result(current_set_score, previous_match))
+
+        if match.opponent_name != current_opponent:
+            # Opponent changed – evaluate buffer
+            # Checks if the buffer (temporary list of matches against the same opponent) contains 2 or more matches 
+            if len(buffer) >= 2:
+                # Loop through the buffered matches, and for each match that you won (m.winner is True), we increase the wins counter.
+                wins = 0
+                for m in buffer:
+                    if m.winner is True:
+                        wins += 1
+                sets.append(add_set_result(wins, buffer[-1]))
+            # Reset buffer
+            buffer = []
+            current_opponent = match.opponent_name
+
+        buffer.append(match)
+
+    # After loop, evaluate final buffer
+    if len(buffer) >= 2:
+        wins = 0
+        for m in buffer:
+            if m.winner is True:
+                wins += 1
+        sets.append(add_set_result(wins, buffer[-1]))
+
+
+
+
+
+
+    # sets = []
+    # current_set_score = 0
+    # number_of_matches = 0
+    # current_opponent = None
+
+    # for match in matches:
+    #     if current_opponent is None:
+    #         # First match
+    #         current_opponent = match.opponent_name
+    #         if match.winner is True:
+    #             current_set_score += 1
+    #         number_of_matches = 1
+    #         print(f"This is opening match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
+    #     elif match.opponent_name == current_opponent:
+    #         number_of_matches += 1
+    #         print(f"This is match #{number_of_matches} against {current_opponent} and won {current_set_score} set/s")
+    #         # Same opponent, add to current set
+    #         if match.winner is True:
+    #             current_set_score += 1       
+    #     else:
+    #          # Opponent changed — finalize the last set **before** moving on
+    #         if number_of_matches >= 2:
+    #             sets.append(add_set_result(current_set_score, previous_match))
+    #             # Reset for new opponent
+    #             number_of_matches = 0
+    #             current_set_score = 0
+    #             current_opponent = None
+    #     previous_match = match  
+    # if number_of_matches >= 2:
+    #     sets.append(add_set_result(current_set_score, previous_match))
         
 
                 
@@ -86,7 +124,7 @@ def matchup_summary(request):
     print(f"The current user is {request.user}")
     print(f"Analysis format is {analysis_format}")
     if analysis_format == 'Set':
-        print(f"Here are the sets {sets}")
+        print("Here are the sets:", sets)
     if analysis_format == 'Match':
         print(f"Here are the matches {matches}")
     
@@ -102,6 +140,7 @@ def matchup_summary(request):
     
     
     return render(request, 'analytics/matchups.html', {
+        'sets': sets,
         'matches': matches,
         'analysis_format': analysis_format,
         'selected_user_character': selected_user_character,
