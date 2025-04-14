@@ -4,9 +4,13 @@
     <h2 class="mb-4">Matchup Summary</h2>
     <p>This is a placeholder for future matchup statistics and insights.</p>
   </div>
+  <form method="post" action="{% url 'regenerate_matches' %}">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Regenerate Match Data</button>
+  </form>
   <form method="get" class="mb-3">
     <div class="dropdown">
-      <button class="btn btn-secondary dropdown-toggle" type="button" id="analysisFormatDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+      <button class="btn btn-secondary dropdown-toIisFormatDropdown" data-bs-toggle="dropdown" aria-expanded="false">
         {{ analysis_format|default:"Set" }}
       </button>
       <ul class="dropdown-menu" aria-labelledby="analysisFormatDropdown">
@@ -20,21 +24,123 @@
     </div>
   </form>
   <table class="table table-bordered table-hover text-center">
+    <!-- WIN LOSS TIMELINE -->
+    <h4 class="mt-5">Win / Loss Count Timeline</h4>
+    <canvas id="wlChart" width="100%" height="40"></canvas>
+    <script>
+      const wlData = {{ wl_chart_data|safe }};
+      const wlLabels = wlData.map(item => item.date);
+      const winCounts = wlData.map(item => item.wins);
+      const lossCounts = wlData.map(item => item.losses);
+    
+      const wlCtx = document.getElementById('wlChart').getContext('2d');
+      const wlChart = new Chart(wlCtx, {
+        type: 'line',
+        data: {
+          labels: wlLabels,
+          datasets: [
+            {
+              label: 'Wins',
+              data: winCounts,
+              borderColor: 'green',
+              backgroundColor: 'rgba(0, 128, 0, 0.1)',
+              tension: 0.3,
+              fill: true,
+            },
+            {
+              label: 'Losses',
+              data: lossCounts,
+              borderColor: 'red',
+              backgroundColor: 'rgba(255, 0, 0, 0.1)',
+              tension: 0.3,
+              fill: true,
+            }
+          ]
+        },
+        options: {
+          interaction: {
+            mode: 'index',
+            intersect: false,
+          },
+          plugins: {
+            tooltip: {
+              callbacks: {
+                afterBody: function(tooltipItems) {
+                  const wins = tooltipItems[0].dataset.label === 'Wins'
+                    ? tooltipItems[0].raw
+                    : tooltipItems[1].raw;
+                  const losses = tooltipItems[0].dataset.label === 'Wins'
+                    ? tooltipItems[1].raw
+                    : tooltipItems[0].raw;
+                  const total = wins + losses;
+                  const winRate = total > 0 ? ((wins / total) * 100).toFixed(2) : "0.00";
+                  return `Winrate: ${winRate}%`;
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    </script>
+    <!-- Set -->
+    {% if analysis_format == 'Set' %}
     <thead class="table-dark">
       <tr>
+        <th scope="col">Date & Time</th>
         <th scope="col">Result</th>
+        <th scope="col">Your Character</th>
+        <th scope="col">Sets Won</th>
         <th scope="col">Opponent</th>
       </tr>
     </thead>
     <tbody>
       {% for set in sets %}
       <tr class="">
+        <td>{{ set.battle_at }}</td>
         <td>{{ set.result }}</td>
+        <td>{{ set.your_character }}</td>
+        <td>{{ set.wins }}</td>
         <td>{{ set.opponent_character }}</td>
-        
-
+      </tr>
+      {% endfor%}
+    </tbody>
+    {% endif %}
+    <!-- Match -->
+    {% if analysis_format == 'Match' %}
+    <thead class="table-dark">
+      <tr>
+        <th scope="col">Date & Time</th>
+        <th scope="col">Result</th>
+        <th scope="col">Your Character</th>
+        <th scope="col">Rounds Won</th>
+        <th scope="col">Rounds Lost</th>
+        <th scope="col">Opponent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for match in matches %}
+      <tr class="">
+        <td> {{ match.battle_at }}</td>
+        <td>
+          {% if match.winner == 0 %}
+            Win
+          {% else %}
+            Loss
+          {% endif %}
+        </td>
+        <td>{{ match.character }}</td>
+        <td>{{ match.rounds_won }}</td>
+        <td>{{ match.rounds_lost }}</td>
+        <td>{{ match.opponent_character }}</td>
       </tr>
       {% endfor %}
     </tbody>
-  </table>
+  {% endif %}
+  </table>  
+  
 {% endblock %}
