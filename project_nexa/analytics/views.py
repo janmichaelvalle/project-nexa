@@ -117,6 +117,22 @@ def matchup_summary(request):
     selected_user_character = request.GET.get('user_character') #Get the user's character from dropdown in the html
     selected_opponent_character = request.GET.get('opponent_character') #Gets the opponent_character for dropdown in html
     matches = Match.objects.filter(profile=user_profile).order_by('-battle_at') # Pull all matches from that user
+    user_characters = Character.objects.filter(chara_id__in=Match.objects.filter(profile=user_profile).values_list('character__chara_id', flat=True)).distinct()
+
+
+    opponent_characters = Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True).distinct()
+
+    if selected_user_character:
+        # try:
+            selected_character = Character.objects.get(name=selected_user_character)
+            matches = matches.filter(character=selected_character)
+            sets = sets.filter(your_character=selected_character)
+        # except Character.DoesNotExist:
+        #     matches = matches.none()
+        
+    
+    if selected_opponent_character:
+        matches = matches.filter(opponent_character=selected_opponent_character)
 
     sets = []
     buffer = []
@@ -155,21 +171,22 @@ def matchup_summary(request):
             sets.append(add_set_result(wins, buffer[-1]))
 
 
+
+
+    ##### PRINT TESTING ###
     print(f"The current user is {request.user}")
     print(f"Analysis format is {analysis_format}")
-    if analysis_format == 'Set':
-        print("Here are the sets:", sets)
-    if analysis_format == 'Match':
-        print(f"Here are the matches {matches}")
+    print(f"This is the selected characters {selected_user_character}")
+    print(f"These are the matches {matches}")
+    print(f"These are the sets {sets}")
+
+
     
-    if selected_user_character:
-        matches = matches.filter(character=selected_user_character)
+
     
-    if selected_opponent_character:
-        matches = matches.filter(opponent_character=selected_opponent_character)
-    
-    user_characters = Match.objects.filter(profile=user_profile).values_list('character', flat=True).distinct()
-    opponent_characters = Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True).distinct()
+    # user_characters = Match.objects.filter(profile=user_profile).values_list('character', flat=True).distinct()
+
+
 
     
     daily_wl_data = defaultdict(lambda: {"wins": 0, "losses": 0})

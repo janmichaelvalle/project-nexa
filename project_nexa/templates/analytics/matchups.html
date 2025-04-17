@@ -9,18 +9,28 @@
     <button type="submit" class="btn btn-danger">Regenerate Match Data</button>
   </form>
   <form method="get" class="mb-3">
-    <div class="dropdown">
-      <button class="btn btn-secondary dropdown-toIisFormatDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-        {{ analysis_format|default:"Set" }}
-      </button>
-      <ul class="dropdown-menu" aria-labelledby="analysisFormatDropdown">
-        <li>
-          <button type="submit" name="analysis_format" value="Set" class="dropdown-item {% if analysis_format == 'Set' or not analysis_format %}active{% endif %}">Set</button>
-        </li>
-        <li>
-          <button type="submit" name="analysis_format" value="Match" class="dropdown-item {% if analysis_format == 'Match' %}active{% endif %}">Match</button>
-        </li>
-      </ul>
+    <div class="row">
+      <!-- Format Dropdown -->
+      <div class="col-md-4">
+        <label for="analysisFormat" class="form-label">Analysis Format</label>
+        <select name="analysis_format" id="analysisFormat" class="form-select" onchange="this.form.submit()">
+          <option value="Set" {% if analysis_format == 'Set' or not analysis_format %}selected{% endif %}>Set</option>
+          <option value="Match" {% if analysis_format == 'Match' %}selected{% endif %}>Match</option>
+        </select>
+      </div>
+  
+      <!-- Character Dropdown -->
+      <div class="col-md-4">
+        <label for="userCharacter" class="form-label">Your Character</label>
+        <select name="user_character" id="userCharacter" class="form-select" onchange="this.form.submit()">
+          <option value="">All</option>
+          {% for char in user_characters %}
+            <option value="{{ char.name }}" {% if selected_user_character == char.name %}selected{% endif %}>
+              {{ char.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
     </div>
   </form>
   <table class="table table-bordered table-hover text-center">
