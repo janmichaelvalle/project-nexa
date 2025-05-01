@@ -31,6 +31,18 @@
           {% endfor %}
         </select>
       </div>
+      <!-- Opponent Character Dropdown -->
+<div class="col-md-4">
+  <label for="opponentCharacter" class="form-label">Opponent Character</label>
+  <select name="opponent_character" id="opponentCharacter" class="form-select" onchange="this.form.submit()">
+    <option value="">All</option>
+    {% for opp_char in opponent_characters %}
+      <option value="{{ opp_char }}" {% if selected_opponent_character == opp_char %}selected{% endif %}>
+        {{ opp_char }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
     </div>
   </form>
   <table class="table table-bordered table-hover text-center">

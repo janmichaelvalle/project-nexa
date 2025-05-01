@@ -57,7 +57,6 @@ def register(request):
                     FROM matches
                     WHERE p1_polaris_id = ? OR p2_polaris_id = ?
                     ORDER BY battle_at DESC
-                    LIMIT 100
                 """, (tekken_id, tekken_id))
                 match_rows = cursor.fetchall()
 

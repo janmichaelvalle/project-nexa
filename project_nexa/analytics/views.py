@@ -45,7 +45,6 @@ def regenerate_matches(request):
         FROM matches
         WHERE p1_polaris_id = ? OR p2_polaris_id = ?
         ORDER BY battle_at DESC
-        LIMIT 100
     """, (tekken_id, tekken_id))
 
     match_rows = cursor.fetchall()
@@ -120,15 +119,11 @@ def matchup_summary(request):
     user_characters = Character.objects.filter(chara_id__in=Match.objects.filter(profile=user_profile).values_list('character__chara_id', flat=True)).distinct()
 
 
-    opponent_characters = Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True).distinct()
+    opponent_characters = sorted(set(Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True)))
 
     if selected_user_character:
-        # try:
             selected_character = Character.objects.get(name=selected_user_character)
             matches = matches.filter(character=selected_character)
-            sets = sets.filter(your_character=selected_character)
-        # except Character.DoesNotExist:
-        #     matches = matches.none()
         
     
     if selected_opponent_character:
@@ -174,10 +169,10 @@ def matchup_summary(request):
 
 
     ##### PRINT TESTING ###
-    print(f"The current user is {request.user}")
-    print(f"Analysis format is {analysis_format}")
-    print(f"This is the selected characters {selected_user_character}")
-    print(f"These are the matches {matches}")
+    # print(f"The current user is {request.user}")
+    # print(f"Analysis format is {analysis_format}")
+    # print(f"This is the selected characters {selected_user_character}")
+    # print(f"These are the matches {matches}")
     print(f"These are the sets {sets}")
 
 
