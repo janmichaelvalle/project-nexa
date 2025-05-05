@@ -45,6 +45,37 @@
 </div>
     </div>
   </form>
+  <div class="row mt-4">
+    <div class="col-md-4">
+      <div class="card mb-3">
+        <div class="card-header">Overall Win Rate</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ overall_win_rate }}%</h5>
+          <p class="card-text">Based on selected filters and {{ analysis_format|lower }} format.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card mb-3">
+      <div class="card-header">Top Loss Contribution</div>
+      <div class="card-body">
+        {% if loss_contribution %}
+          <ul class="list-group list-group-flush">
+            {% for opponent, count in loss_contribution %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ opponent }}
+                <span class="badge bg-danger rounded-pill">{{ count }}</span>
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted">No losses found for selected filters.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  
   <table class="table table-bordered table-hover text-center">
     <!-- WIN LOSS TIMELINE -->
     <h4 class="mt-5">Win / Loss Count Timeline</h4>
