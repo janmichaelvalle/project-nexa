@@ -11,7 +11,7 @@
   <form method="get" class="mb-3">
     <div class="row">
       <!-- Format Dropdown -->
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="analysisFormat" class="form-label">Analysis Format</label>
         <select name="analysis_format" id="analysisFormat" class="form-select" onchange="this.form.submit()">
           <option value="Set" {% if analysis_format == 'Set' or not analysis_format %}selected{% endif %}>Set</option>
@@ -20,7 +20,7 @@
       </div>
   
       <!-- Character Dropdown -->
-      <div class="col-md-4">
+      <div class="col-md-3">
         <label for="userCharacter" class="form-label">Your Character</label>
         <select name="user_character" id="userCharacter" class="form-select" onchange="this.form.submit()">
           <option value="">All</option>
@@ -32,7 +32,7 @@
         </select>
       </div>
       <!-- Opponent Character Dropdown -->
-<div class="col-md-4">
+<div class="col-md-3">
   <label for="opponentCharacter" class="form-label">Opponent Character</label>
   <select name="opponent_character" id="opponentCharacter" class="form-select" onchange="this.form.submit()">
     <option value="">All</option>
@@ -41,6 +41,16 @@
         {{ opp_char }}
       </option>
     {% endfor %}
+  </select>
+</div>
+<div class="col-md-3">
+  <label for="limit" class="form-label">Limit</label>
+  <select name="limit" id="limit" class="form-select" onchange="this.form.submit()">
+    <option value="">All</option>
+    <option value="10" {% if request.GET.limit == '10' %}selected{% endif %}>Last 10</option>
+    <option value="25" {% if request.GET.limit == '25' %}selected{% endif %}>Last 25</option>
+    <option value="50" {% if request.GET.limit == '50' %}selected{% endif %}>Last 50</option>
+    <option value="100" {% if request.GET.limit == '100' %}selected{% endif %}>Last 100</option>
   </select>
 </div>
     </div>
@@ -144,6 +154,7 @@
     {% if analysis_format == 'Set' %}
     <thead class="table-dark">
       <tr>
+        <th scope="col">#</th>
         <th scope="col">Date & Time</th>
         <th scope="col">Result</th>
         <th scope="col">Your Character</th>
@@ -154,19 +165,21 @@
     <tbody>
       {% for set in sets %}
       <tr class="">
+        <td>{{ forloop.counter }}</td>
         <td>{{ set.battle_at }}</td>
         <td>{{ set.result }}</td>
         <td>{{ set.your_character }}</td>
         <td>{{ set.wins }}</td>
         <td>{{ set.opponent_character }}</td>
       </tr>
-      {% endfor%}
+      {% endfor %}
     </tbody>
     {% endif %}
     <!-- Match -->
     {% if analysis_format == 'Match' %}
     <thead class="table-dark">
       <tr>
+        <th scope="col">#</th>
         <th scope="col">Date & Time</th>
         <th scope="col">Result</th>
         <th scope="col">Your Character</th>
@@ -178,6 +191,7 @@
     <tbody>
       {% for match in matches %}
       <tr class="">
+        <td>{{ forloop.counter }}</td>
         <td> {{ match.battle_at }}</td>
         <td>
           {% if match.winner == 0 %}

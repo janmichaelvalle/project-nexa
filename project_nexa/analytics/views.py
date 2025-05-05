@@ -115,62 +115,75 @@ def matchup_summary(request):
     analysis_format = request.GET.get('analysis_format') #Gets sets/matches html
     selected_user_character = request.GET.get('user_character') #Get the user's character from html
     selected_opponent_character = request.GET.get('opponent_character') #Gets the opponent_character for html
-    matches = Match.objects.filter(profile=user_profile).order_by('-battle_at') # Pull all matches from that user
+    
     user_characters = Character.objects.filter(chara_id__in=Match.objects.filter(profile=user_profile).values_list('character__chara_id', flat=True)).distinct() # Filters character selected
     opponent_characters = sorted(set(Match.objects.filter(profile=user_profile).values_list('opponent_character', flat=True))) #Filters opponent selected character
 
+
+    # Start with full queryset
+    matches_queryset = Match.objects.filter(profile=user_profile)
+
+    # Apply filters
     if selected_user_character:
-            selected_character = Character.objects.get(name=selected_user_character)
-            matches = matches.filter(character=selected_character)
-        
-    
+        selected_character = Character.objects.get(name=selected_user_character)
+        matches_queryset = matches_queryset.filter(character=selected_character)
+
     if selected_opponent_character:
-        matches = matches.filter(opponent_character=selected_opponent_character)
+        matches_queryset = matches_queryset.filter(opponent_character=selected_opponent_character)
+
+    matches_queryset = matches_queryset.order_by('-battle_at')
+
+    # Apply match limit if provided
+    match_limit = request.GET.get('limit')
+    if match_limit and match_limit.isdigit():
+        matches = list(matches_queryset[:int(match_limit)])
+    else:
+        matches = list(matches_queryset)
+
+
+    
+
+
+    
 
     sets = []
     buffer = []
     current_opponent = None
 
-    for match in matches:
+    for match in matches_queryset:
         if current_opponent is None:
             current_opponent = match.opponent_name
 
-        if match.opponent_name != current_opponent:
-            # Opponent changed – evaluate buffer
-            # Checks if the buffer (temporary list of matches against the same opponent) contains 2 or more matches 
-            if len(buffer) >= 2:
-                # Loop through the buffered matches, and for each match that you won (m.winner is True), we increase the wins counter.
-                wins = 0
-                for m in buffer:
-                    if m.winner is False:
-                        wins += 1
-                losses = len(buffer) - wins
-                if wins == 2 or losses == 2:
-                    sets.append(add_set_result(wins, buffer[-1]))
-            # Reset buffer
+        if match.opponent_name != current_opponent or len(buffer) == 3:
+            wins = sum(1 for m in buffer if m.winner is False)
+            losses = sum(1 for m in buffer if m.winner is True)
+            if wins == 2 or losses == 2:
+                sets.append(add_set_result(wins, buffer[-1]))
             buffer = []
             current_opponent = match.opponent_name
 
         buffer.append(match)
 
-    # After loop, evaluate final buffer
-    if len(buffer) >= 2:
-        wins = 0
-        for m in buffer:
-            if m.winner is False:
-                wins += 1
-        losses = len(buffer) - wins
+    # Final check for the last buffer
+    if buffer:
+        wins = sum(1 for m in buffer if m.winner is False)
+        losses = sum(1 for m in buffer if m.winner is True)
         if wins == 2 or losses == 2:
             sets.append(add_set_result(wins, buffer[-1]))
 
+    sets = sorted(sets, key=lambda s: s['battle_at'], reverse=True)
 
+    set_limit = request.GET.get('limit')
+    if set_limit and set_limit.isdigit():
+        sets = sets[:int(set_limit)]
 
     total = 0
     wins = 0
 
     if analysis_format == 'Match':
-        total = matches.count()
-        wins = matches.filter(winner=False).count()  # False means you won
+        total = len(matches)
+        wins = sum(1 for m in matches if m.winner is False)  # False = win
+
 
     elif analysis_format == 'Set':
         total = len(sets)
@@ -185,8 +198,8 @@ def matchup_summary(request):
     loss_contribution = []
 
     if analysis_format == 'Match':
-        losses = matches.filter(winner=True)  #Gets all matches that you lost to
-        counter = Counter(losses.values_list('opponent_character', flat=True))
+        losses = [m for m in matches if m.winner is True]  #Gets all matches that you lost to
+        counter = Counter([m.opponent_character for m in losses])
         loss_contribution = counter.most_common()
         print("Losses:", losses)
         print("Loss contribution per character:", counter)
@@ -223,7 +236,7 @@ def matchup_summary(request):
     daily_wl_data = defaultdict(lambda: {"wins": 0, "losses": 0})
 
     if analysis_format == 'Match':
-        for match in matches.order_by('battle_at'):
+        for match in sorted(matches, key=lambda m: m.battle_at):
             date = localtime(match.battle_at).date()
             if match.winner is False: 
                 daily_wl_data[date]["wins"] += 1
@@ -262,11 +275,3 @@ def matchup_summary(request):
         'loss_contribution': loss_contribution,
 
     })
-
-
-
-
-
-
-
-
